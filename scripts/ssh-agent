@@ -1,0 +1,108 @@
+#!/bin/bash
+set +v off
+saBaseDir=~/.ssh/
+
+trap "" HUP
+
+cd ~
+
+# create directory for keyfiles
+if [ ! -d .ssh ]
+ then
+  mkdir .ssh
+fi
+
+
+# set the right permissions
+chmod 700 -R .ssh
+
+if [ ! -f kill-ssh-agent ]
+ then
+  echo "pkill -9 ssh-agent" > kill-ssh-agent
+  echo "while read p; do" >> kill-ssh-agent
+  echo "kill -9 \$p" >> kill-ssh-agent
+  echo "done < ~/.ssh/agent-pids" >> kill-ssh-agent
+  echo "rm ~/.ssh/agent-pids" >> kill-ssh-agent
+  chmod 700 kill-ssh-agent
+fi
+
+cd ~/.ssh
+
+# create a keyfile (if it not exists)
+if [ ! -f id_dsa -a ! -f id_dsa.pub ] 
+ then
+  ssh-keygen -t dsa
+fi
+
+
+if [ -f id_dsa.pub ]
+ then
+  cat id_dsa.pub > authorized_keys2
+#  if [ ! -f agentid ]
+#   then
+#    id=$(uuidgen)
+#    echo $id > agentid
+#  else
+#    id=$(head -n 1 agentid)
+#  fi
+
+  if [ ! -f prime-agent ]
+   then
+    echo "ssh_info_file=~/.ssh-agent-$id-info" > prime_agent
+    echo "ssh-agent >\$ssh_info_file" >> prime_agent
+    echo "chmod 600 \$ssh_info_file" >> prime_agent
+    echo "source \$ssh_info_file" >> prime_agent
+    echo "for i in identity id_dsa id_rsa" >> prime_agent
+    echo "do" >> prime_agent
+    echo "  ssh-add ~/.ssh/\$i" >> prime_agent
+    echo "done" >> prime_agent
+  chmod 700 prime_agent
+  fi
+
+
+  #cat ../ssh-agent | grep -v "#nocopy" > ../ssh-agent-$id #nocopy
+  #mv ../ssh-agent old.ssh-agent #nocopy
+
+  #chmod 700 ../ssh-agent #nocopy
+
+  #exit #nocopy
+
+  nohup ./prime_agent &
+
+  . ~/.ssh-agent-info &
+
+  ########## edit here ##########
+
+  # SrcIP   = IP-Address on which the connection is permitted (* for every IP/Interface)
+  # SrcPort = Port you have to connect to
+  # DstHost = Host you will be forwarded to
+  # DstPort = Port you will be forwarded to
+
+  # ssh -L <SrcIp>:<SrcPort>:<DstHost>:<DstPort> localhost -N &
+
+  # this example creates a listener on localhost:60100
+  # which will redirect the connection to 172.16.90.103:22
+   ssh -L *:60100:172.16.90.100:22 localhost -N &
+   echo $! > agent-pids
+   ssh -L *:60101:172.16.90.101:22 localhost -N &
+   echo $! >> agent-pids
+   ssh -L *:60102:172.16.90.102:22 localhost -N &
+   echo $! >> agent-pids
+   ssh -L *:60103:172.16.90.103:22 localhost -N &
+   echo $! >> agent-pids
+   ssh -L *:60123:172.16.90.123:22 localhost -N &
+   echo $! >> agent-pids
+
+  # to establish a connection type
+  # ssh <username>@<yourlabPC> -p 60100
+
+  # the specified username must be the username for <DstHost>
+  # same applies for the password
+
+  ########## end edit  ##########
+
+else
+  echo "Keyfile not found!"
+fi
+
+# pkill -9 ssh-agent

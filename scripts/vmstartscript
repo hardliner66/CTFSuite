@@ -1,0 +1,1 @@
+vmrun start ~/vmware/folder1/image1.vmx nogui&
