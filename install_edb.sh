@@ -1,7 +1,21 @@
-#!/bin/bash
-sudo apt-get install libqt4-dev libboost-dev
-wget http://www.codef00.com/projects/debugger-0.9.20.tgz
-tar xf debugger-0.9.20.tgz
-cd debugger
-qmake && make
+sudo apt-get install       \
+    cmake                  \
+    build-essential        \
+    libboost-dev           \
+    libqt5xmlpatterns5-dev \
+    qtbase5-dev            \
+    qt5-default            \
+    libqt5svg5-dev         \
+    libgraphviz-dev        \
+    libcapstone-dev        \
+    pkg-config
+
+
+# build and run edb
+git clone --recursive https://github.com/eteran/edb-debugger.git
+cd edb-debugger
+mkdir build
+cd build
+cmake ..
+make
 sudo make install
